@@ -9777,7 +9777,9 @@ function run() {
                 core.debug(`Root artifact directory is ${searchResult.rootDirectory}`);
                 const annotations = ramda_1.chain(annotations_1.annotationsForPath, searchResult.filesToUpload);
                 core.debug(`Grouping ${annotations.length} annotations into chunks of ${MAX_ANNOTATIONS_PER_REQUEST}`);
-                const groupedAnnotations = ramda_1.splitEvery(MAX_ANNOTATIONS_PER_REQUEST, annotations);
+                const groupedAnnotations = annotations.length > MAX_ANNOTATIONS_PER_REQUEST
+                    ? ramda_1.splitEvery(MAX_ANNOTATIONS_PER_REQUEST, annotations)
+                    : [annotations];
                 core.debug(`Created ${groupedAnnotations.length} buckets`);
                 for (const annotationSet of groupedAnnotations) {
                     yield createCheck(name, title, annotationSet, annotations.length);
@@ -9796,7 +9798,7 @@ function createCheck(name, title, annotations, numErrors) {
         const res = yield octokit.checks.listForRef(req);
         const existingCheckRun = res.data.check_runs.find(check => check.name === name);
         if (!existingCheckRun) {
-            const createRequest = Object.assign(Object.assign({}, github_1.context.repo), { head_sha: github_1.context.sha, name, status: 'completed', conclusion: 'neutral', output: {
+            const createRequest = Object.assign(Object.assign({}, github_1.context.repo), { head_sha: github_1.context.sha, name, status: 'completed', conclusion: numErrors === 0 ? 'success' : 'neutral', output: {
                     title,
                     summary: `${numErrors} violation(s) found`,
                     annotations

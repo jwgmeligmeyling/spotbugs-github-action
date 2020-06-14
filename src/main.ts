@@ -33,10 +33,11 @@ async function run(): Promise<void> {
         `Grouping ${annotations.length} annotations into chunks of ${MAX_ANNOTATIONS_PER_REQUEST}`
       )
 
-      const groupedAnnotations: Annotation[][] = splitEvery(
-        MAX_ANNOTATIONS_PER_REQUEST,
-        annotations
-      )
+      const groupedAnnotations: Annotation[][] =
+        annotations.length > MAX_ANNOTATIONS_PER_REQUEST
+          ? splitEvery(MAX_ANNOTATIONS_PER_REQUEST, annotations)
+          : [annotations]
+
       core.debug(`Created ${groupedAnnotations.length} buckets`)
 
       for (const annotationSet of groupedAnnotations) {
@@ -71,7 +72,7 @@ async function createCheck(
       head_sha: context.sha,
       name,
       status: <const>'completed',
-      conclusion: <const>'neutral',
+      conclusion: numErrors === 0 ? <const>'success' : <const>'neutral',
       output: {
         title,
         summary: `${numErrors} violation(s) found`,
