@@ -61,8 +61,8 @@ function annotationsForPath(resultFile) {
     core.info(`${resultFile} has ${violations.length} violations`);
     const getFilePath = (0, ramda_1.memoizeWith)(ramda_1.identity, (sourcePath) => {
         var _a, _b;
-        return asArray((_b = (_a = result === null || result === void 0 ? void 0 : result.BugCollection) === null || _a === void 0 ? void 0 : _a.Project) === null || _b === void 0 ? void 0 : _b.SrcDir).find(SrcDir => {
-            const combinedPath = path.join(SrcDir, sourcePath);
+        return asArray((_b = (_a = result === null || result === void 0 ? void 0 : result.BugCollection) === null || _a === void 0 ? void 0 : _a.Project) === null || _b === void 0 ? void 0 : _b.SrcDir).find(srcDir => {
+            const combinedPath = path.join(srcDir, sourcePath);
             const fileExists = fs_1.default.existsSync(combinedPath);
             core.debug(`${combinedPath} ${fileExists ? 'does' : 'does not'} exists`);
             return fileExists;
@@ -74,12 +74,12 @@ function annotationsForPath(resultFile) {
         const primarySourceLine = sourceLines.length > 1
             ? sourceLines.find(sl => sl.primary)
             : sourceLines[0];
-        const SrcDir = (primarySourceLine === null || primarySourceLine === void 0 ? void 0 : primarySourceLine.sourcepath) &&
+        const srcDir = (primarySourceLine === null || primarySourceLine === void 0 ? void 0 : primarySourceLine.sourcepath) &&
             getFilePath(primarySourceLine === null || primarySourceLine === void 0 ? void 0 : primarySourceLine.sourcepath);
-        if ((primarySourceLine === null || primarySourceLine === void 0 ? void 0 : primarySourceLine.start) && SrcDir) {
+        if ((primarySourceLine === null || primarySourceLine === void 0 ? void 0 : primarySourceLine.start) && srcDir) {
             const annotation = {
                 annotation_level: github_1.AnnotationLevel.warning,
-                path: path.relative(root, path.join(SrcDir, primarySourceLine === null || primarySourceLine === void 0 ? void 0 : primarySourceLine.sourcepath)),
+                path: path.relative(root, path.join(srcDir, primarySourceLine === null || primarySourceLine === void 0 ? void 0 : primarySourceLine.sourcepath)),
                 start_line: Number((primarySourceLine === null || primarySourceLine === void 0 ? void 0 : primarySourceLine.start) || 1),
                 end_line: Number((primarySourceLine === null || primarySourceLine === void 0 ? void 0 : primarySourceLine.end) || (primarySourceLine === null || primarySourceLine === void 0 ? void 0 : primarySourceLine.start) || 1),
                 title: BugInstance.type,
@@ -112,6 +112,7 @@ var Inputs;
     Inputs["Title"] = "title";
     Inputs["Path"] = "path";
     Inputs["Token"] = "token";
+    Inputs["Threshold"] = "0";
 })(Inputs = exports.Inputs || (exports.Inputs = {}));
 
 
@@ -181,6 +182,7 @@ function run() {
             const path = core.getInput(constants_1.Inputs.Path, { required: true });
             const name = core.getInput(constants_1.Inputs.Name);
             const title = core.getInput(constants_1.Inputs.Title);
+            const threshold = Number(core.getInput(constants_1.Inputs.Threshold));
             const searchResult = yield (0, search_1.findResults)(path);
             if (searchResult.filesToUpload.length === 0) {
                 core.warning(`No files were found for the provided path: ${path}. No results will be uploaded.`);
@@ -194,8 +196,15 @@ function run() {
                     ? (0, ramda_1.splitEvery)(MAX_ANNOTATIONS_PER_REQUEST, annotations)
                     : [annotations];
                 core.debug(`Created ${groupedAnnotations.length} buckets`);
+                let totalErrors = 0;
                 for (const annotationSet of groupedAnnotations) {
-                    yield createCheck(name, title, annotationSet, annotations.length);
+                    if (annotationSet.length > 0) {
+                        yield createCheck(name, title, annotationSet);
+                        totalErrors = totalErrors + annotationSet.length;
+                    }
+                }
+                if (totalErrors !== threshold) {
+                    core.setFailed(`${totalErrors} violation(s) uploaded`);
                 }
             }
         }
@@ -204,8 +213,9 @@ function run() {
         }
     });
 }
-function createCheck(name, title, annotations, numErrors) {
+function createCheck(name, title, annotations) {
     return __awaiter(this, void 0, void 0, function* () {
+        core.debug(`Upload ${annotations.length} Annotations`);
         const octokit = (0, github_1.getOctokit)(core.getInput(constants_1.Inputs.Token));
         let sha = github_1.context.sha;
         if (github_1.context.payload.pull_request) {
@@ -213,23 +223,37 @@ function createCheck(name, title, annotations, numErrors) {
         }
         const req = Object.assign(Object.assign({}, github_1.context.repo), { ref: sha });
         const res = yield octokit.checks.listForRef(req);
+        if (core.isDebug()) {
+            for (const checkRun of res.data.check_runs) {
+                core.debug(`${checkRun.name}`);
+            }
+        }
         const existingCheckRun = res.data.check_runs.find(check => check.name === name);
+        const status = 'completed';
+        const numErrors = annotations.length;
+        const summary = `${numErrors} violation(s) found`;
+        const conclusion = 'neutral';
         if (!existingCheckRun) {
-            const createRequest = Object.assign(Object.assign({}, github_1.context.repo), { head_sha: sha, name, status: 'completed', conclusion: numErrors === 0 ? 'success' : 'neutral', output: {
+            const createRequest = Object.assign(Object.assign({}, github_1.context.repo), { head_sha: sha, name,
+                status,
+                conclusion, output: {
                     title,
-                    summary: `${numErrors} violation(s) found`,
+                    summary,
                     annotations
                 } });
+            core.debug(`First upload`);
             yield octokit.checks.create(createRequest);
         }
         else {
-            const check_run_id = existingCheckRun.id;
-            const update_req = Object.assign(Object.assign({}, github_1.context.repo), { check_run_id, status: 'completed', conclusion: 'neutral', output: {
+            const checkRunId = existingCheckRun.id;
+            const updateReq = Object.assign(Object.assign({}, github_1.context.repo), { check_run_id: checkRunId, status,
+                conclusion, output: {
                     title,
-                    summary: `${numErrors} violation(s) found`,
+                    summary,
                     annotations
                 } });
-            yield octokit.checks.update(update_req);
+            core.debug(`another upload`);
+            yield octokit.checks.update(updateReq);
         }
     });
 }

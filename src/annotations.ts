@@ -43,8 +43,8 @@ export function annotationsForPath(resultFile: string): Annotation[] {
   const getFilePath: (sourcePath: string) => string | undefined = memoizeWith(
     identity,
     (sourcePath: string) =>
-      asArray(result?.BugCollection?.Project?.SrcDir).find(SrcDir => {
-        const combinedPath = path.join(SrcDir, sourcePath)
+      asArray(result?.BugCollection?.Project?.SrcDir).find(srcDir => {
+        const combinedPath = path.join(srcDir, sourcePath)
         const fileExists = fs.existsSync(combinedPath)
         core.debug(`${combinedPath} ${fileExists ? 'does' : 'does not'} exists`)
         return fileExists
@@ -58,16 +58,16 @@ export function annotationsForPath(resultFile: string): Annotation[] {
       sourceLines.length > 1
         ? sourceLines.find(sl => sl.primary)
         : sourceLines[0]
-    const SrcDir: string | undefined =
+    const srcDir: string | undefined =
       primarySourceLine?.sourcepath &&
       getFilePath(primarySourceLine?.sourcepath)
 
-    if (primarySourceLine?.start && SrcDir) {
+    if (primarySourceLine?.start && srcDir) {
       const annotation: Annotation = {
         annotation_level: AnnotationLevel.warning,
         path: path.relative(
           root,
-          path.join(SrcDir, primarySourceLine?.sourcepath)
+          path.join(srcDir, primarySourceLine?.sourcepath)
         ),
         start_line: Number(primarySourceLine?.start || 1),
         end_line: Number(

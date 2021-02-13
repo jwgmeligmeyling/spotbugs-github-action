@@ -13,6 +13,7 @@ async function run(): Promise<void> {
     const path = core.getInput(Inputs.Path, {required: true})
     const name = core.getInput(Inputs.Name)
     const title = core.getInput(Inputs.Title)
+    const threshold = Number(core.getInput(Inputs.Threshold))
 
     const searchResult = await findResults(path)
     if (searchResult.filesToUpload.length === 0) {
@@ -40,8 +41,15 @@ async function run(): Promise<void> {
 
       core.debug(`Created ${groupedAnnotations.length} buckets`)
 
+      let totalErrors = 0
       for (const annotationSet of groupedAnnotations) {
-        await createCheck(name, title, annotationSet, annotations.length)
+        if (annotationSet.length > 0) {
+          await createCheck(name, title, annotationSet)
+          totalErrors = totalErrors + annotationSet.length
+        }
+      }
+      if (totalErrors !== threshold) {
+        core.setFailed(`${totalErrors} violation(s) uploaded`)
       }
     }
   } catch (error) {
@@ -52,9 +60,9 @@ async function run(): Promise<void> {
 async function createCheck(
   name: string,
   title: string,
-  annotations: Annotation[],
-  numErrors: number
+  annotations: Annotation[]
 ): Promise<void> {
+  core.debug(`Upload ${annotations.length} Annotations`)
   const octokit = getOctokit(core.getInput(Inputs.Token))
   let sha = context.sha
 
@@ -68,41 +76,51 @@ async function createCheck(
   }
 
   const res = await octokit.checks.listForRef(req)
+  if (core.isDebug()) {
+    for (const checkRun of res.data.check_runs) {
+      core.debug(`${checkRun.name}`)
+    }
+  }
   const existingCheckRun = res.data.check_runs.find(
     check => check.name === name
   )
 
+  const status = <const>'completed'
+  const numErrors = annotations.length
+  const summary = `${numErrors} violation(s) found`
+  const conclusion = <const>'neutral'
   if (!existingCheckRun) {
     const createRequest = {
       ...context.repo,
       head_sha: sha,
       name,
-      status: <const>'completed',
-      conclusion: numErrors === 0 ? <const>'success' : <const>'neutral',
+      status,
+      conclusion,
       output: {
         title,
-        summary: `${numErrors} violation(s) found`,
+        summary,
         annotations
       }
     }
 
+    core.debug(`First upload`)
     await octokit.checks.create(createRequest)
   } else {
-    const check_run_id = existingCheckRun.id
-
-    const update_req = {
+    const checkRunId = existingCheckRun.id
+    const updateReq = {
       ...context.repo,
-      check_run_id,
-      status: <const>'completed',
-      conclusion: <const>'neutral',
+      check_run_id: checkRunId,
+      status,
+      conclusion,
       output: {
         title,
-        summary: `${numErrors} violation(s) found`,
+        summary,
         annotations
       }
     }
 
-    await octokit.checks.update(update_req)
+    core.debug(`another upload`)
+    await octokit.checks.update(updateReq)
   }
 }
 

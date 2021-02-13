@@ -20,6 +20,9 @@ inputs:
       Also when generating a new PAT, select the least scopes necessary.
       [Learn more about creating and using encrypted secrets](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/creating-and-using-encrypted-secrets)
     default: ${{ github.token }}
+  threshold:
+    description: 'Configures the threshold when this job is marked as failed if to many finding'
+    default: 0
 runs:
   using: 'node12'
   main: 'dist/index.js'
