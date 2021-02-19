@@ -42,8 +42,8 @@ export function annotationsForPath(resultFile: string): Annotation[] {
   const getFilePath: (sourcePath: string) => string | undefined = memoizeWith(
     identity,
     (sourcePath: string) =>
-      asArray(result?.BugCollection?.Project?.SrcDir).find(SrcDir => {
-        const combinedPath = path.join(SrcDir, sourcePath)
+      asArray(result?.BugCollection?.Project?.SrcDir).find(srcDir => {
+        const combinedPath = path.join(srcDir, sourcePath)
         const fileExists = fs.existsSync(combinedPath)
         core.debug(`${combinedPath} ${fileExists ? 'does' : 'does not'} exists`)
         return fileExists
@@ -52,16 +52,16 @@ export function annotationsForPath(resultFile: string): Annotation[] {
 
   return chain(BugInstance => {
     const annotationsForBug: Annotation[] = []
-    const SrcDir: string | undefined =
+    const srcDir: string | undefined =
       BugInstance.SourceLine.sourcepath &&
       getFilePath(BugInstance.SourceLine.sourcepath)
 
-    if (BugInstance.SourceLine.start && SrcDir) {
+    if (BugInstance.SourceLine.start && srcDir) {
       const annotation: Annotation = {
         annotation_level: AnnotationLevel.warning,
         path: path.relative(
           root,
-          path.join(SrcDir, BugInstance.SourceLine.sourcepath)
+          path.join(srcDir, BugInstance.SourceLine.sourcepath)
         ),
         start_line: Number(BugInstance.SourceLine.start || 1),
         end_line: Number(
@@ -76,8 +76,8 @@ export function annotationsForPath(resultFile: string): Annotation[] {
       }
       annotationsForBug.push(annotation)
     } else {
-      core.debug(
-        `Skipping bug instance because source line start or source directory are missing`
+      core.info(
+        `Skipping bug instance because source line start or source directory are missing (${BugInstance.SourceLine.sourcepath})`
       )
     }
 

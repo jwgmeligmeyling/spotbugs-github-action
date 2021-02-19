@@ -24,6 +24,9 @@ Optional. Title for the check run to create. Defaults to `SpotBugs Source Code A
 ### `token`
 Optional. GitHub API access token. Defaults to `${{ github.token }}`, which is set by `actions/checkout@v2` minimally.
 
+### `threshold`
+Optional. Configures the threshold when this job is marked as failed if to many finding. Defaults to `0`.
+
 ## Example usage
 
 ```yaml
@@ -116,4 +119,9 @@ $ npm test
   ✓ test runs (95ms)
 
 ...
+```
+
+Before creating the PullRequest make sure you executed all
+```
+npm run all
 ```
