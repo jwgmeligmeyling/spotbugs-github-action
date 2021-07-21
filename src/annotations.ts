@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import {BugPattern, FindbugsResult} from './spotbugs'
+import {BugPattern, FindbugsResult, SourceLine} from './spotbugs'
 import parser from 'fast-xml-parser'
 import fs from 'fs'
 import * as path from 'path'
@@ -33,6 +33,9 @@ export function annotationsForPath(resultFile: string): Annotation[] {
     XML_PARSE_OPTIONS
   )
   const violations = asArray(result?.BugCollection?.BugInstance)
+
+  core.debug(`${violations.length}`)
+
   const bugPatterns: {[type: string]: BugPattern} = indexBy(
     a => a.type,
     asArray(result?.BugCollection?.BugPattern)
@@ -52,20 +55,22 @@ export function annotationsForPath(resultFile: string): Annotation[] {
 
   return chain(BugInstance => {
     const annotationsForBug: Annotation[] = []
+    const sourceLines = asArray(BugInstance.SourceLine)
+    const primarySourceLine: SourceLine | undefined = (sourceLines.length > 1) ? sourceLines.find(sl => sl.primary) : sourceLines[0]
     const SrcDir: string | undefined =
-      BugInstance.SourceLine.sourcepath &&
-      getFilePath(BugInstance.SourceLine.sourcepath)
+      primarySourceLine?.sourcepath &&
+      getFilePath(primarySourceLine?.sourcepath)
 
-    if (BugInstance.SourceLine.start && SrcDir) {
+    if (primarySourceLine?.start && SrcDir) {
       const annotation: Annotation = {
         annotation_level: AnnotationLevel.warning,
         path: path.relative(
           root,
-          path.join(SrcDir, BugInstance.SourceLine.sourcepath)
+          path.join(SrcDir, primarySourceLine?.sourcepath)
         ),
-        start_line: Number(BugInstance.SourceLine.start || 1),
+        start_line: Number(primarySourceLine?.start || 1),
         end_line: Number(
-          BugInstance.SourceLine.end || BugInstance.SourceLine.start || 1
+          primarySourceLine?.end || primarySourceLine?.start || 1
         ),
         title: BugInstance.type,
         message: BugInstance.LongMessage,
