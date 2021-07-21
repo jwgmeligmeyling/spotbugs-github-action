@@ -33,9 +33,6 @@ export function annotationsForPath(resultFile: string): Annotation[] {
     XML_PARSE_OPTIONS
   )
   const violations = asArray(result?.BugCollection?.BugInstance)
-
-  core.debug(`${violations.length}`)
-
   const bugPatterns: {[type: string]: BugPattern} = indexBy(
     a => a.type,
     asArray(result?.BugCollection?.BugPattern)
