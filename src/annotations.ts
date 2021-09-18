@@ -2,6 +2,7 @@ import * as core from '@actions/core'
 import {BugPattern, FindbugsResult, SourceLine} from './spotbugs'
 import parser from 'fast-xml-parser'
 import fs from 'fs'
+import BufferEncoding from 'buffer'
 import * as path from 'path'
 import {Annotation, AnnotationLevel} from './github'
 import {fromString as htmlToText, HtmlToTextOptions} from 'html-to-text'
@@ -29,7 +30,7 @@ export function annotationsForPath(resultFile: string): Annotation[] {
   const root: string = process.env['GITHUB_WORKSPACE'] || ''
 
   const result: FindbugsResult = parser.parse(
-    fs.readFileSync(resultFile, <const>'UTF-8'),
+    fs.readFileSync(resultFile, 'UTF-8' as BufferEncoding),
     XML_PARSE_OPTIONS
   )
   const violations = asArray(result?.BugCollection?.BugInstance)
@@ -53,7 +54,10 @@ export function annotationsForPath(resultFile: string): Annotation[] {
   return chain(BugInstance => {
     const annotationsForBug: Annotation[] = []
     const sourceLines = asArray(BugInstance.SourceLine)
-    const primarySourceLine: SourceLine | undefined = (sourceLines.length > 1) ? sourceLines.find(sl => sl.primary) : sourceLines[0]
+    const primarySourceLine: SourceLine | undefined =
+      sourceLines.length > 1
+        ? sourceLines.find(sl => sl.primary)
+        : sourceLines[0]
     const SrcDir: string | undefined =
       primarySourceLine?.sourcepath &&
       getFilePath(primarySourceLine?.sourcepath)
