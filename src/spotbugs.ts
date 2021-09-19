@@ -15,7 +15,7 @@ export interface BugCollection {
 export interface BugInstance {
   LongMessage: string
   ShortMessage: string
-  SourceLine: SourceLine
+  SourceLine: SourceLine[] | SourceLine
   priority: number
   type: string
 }
@@ -25,6 +25,7 @@ export interface SourceLine {
   end?: string
   classname: string
   sourcepath: string
+  primary?: boolean
 }
 
 export interface BugPattern {

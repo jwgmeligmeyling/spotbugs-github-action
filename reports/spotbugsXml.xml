@@ -166,6 +166,11 @@
                     sourcefile='CapsuleTargetTest.java' startBytecode='15' primary='true'>
             <Message>At CapsuleTargetTest.java:[line 67]</Message>
         </SourceLine>
+        <SourceLine endBytecode='16' classname='com.pallasathenagroup.capsule.client.impl.CapsuleTargetTest' start='67'
+                    end='67' sourcepath='com/pallasathenagroup/capsule/client/impl/CapsuleTargetTest.java'
+                    sourcefile='CapsuleTargetTest.java' startBytecode='48'>
+            <Message>At CapsuleTargetTest.java:[line 67]</Message>
+        </SourceLine>
     </BugInstance>
     <BugInstance instanceOccurrenceNum='0' instanceHash='7571214c50c30eacd953a1f7ed52f58f' rank='15' abbrev='ST'
                  category='STYLE' priority='1' type='ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD' instanceOccurrenceMax='0'>
