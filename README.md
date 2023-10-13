@@ -1,4 +1,4 @@
-![build-test](https://github.com/jwgmeligmeyling/spotbugs-github-action/workflows/build-test/badge.svg)
+![build-test](https://github.com/lcollins/spotbugs-github-action/workflows/build-test/badge.svg)
 
 # SpotBugs GitHub Action
 
