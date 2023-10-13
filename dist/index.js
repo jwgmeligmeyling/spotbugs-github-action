@@ -59,8 +59,8 @@ function annotationsForPath(resultFile) {
     var _a, _b;
     core.info(`Creating annotations for ${resultFile}`);
     const root = process.env['GITHUB_WORKSPACE'] || '';
-    const parser = new fast_xml_parser_1.XMLParser();
-    const result = parser.parse(fs_1.default.readFileSync(resultFile, 'UTF-8'), XML_PARSE_OPTIONS);
+    const parser = new fast_xml_parser_1.XMLParser(XML_PARSE_OPTIONS);
+    const result = parser.parse(fs_1.default.readFileSync(resultFile, 'UTF-8'));
     const violations = asArray((_a = result === null || result === void 0 ? void 0 : result.BugCollection) === null || _a === void 0 ? void 0 : _a.BugInstance);
     const bugPatterns = (0, ramda_1.indexBy)(a => a.type, asArray((_b = result === null || result === void 0 ? void 0 : result.BugCollection) === null || _b === void 0 ? void 0 : _b.BugPattern));
     core.info(`${resultFile} has ${violations.length} violations`);
