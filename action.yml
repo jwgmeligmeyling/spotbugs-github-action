@@ -1,6 +1,6 @@
 name: 'Push SpotBugs report'
 description: 'Push SpotBugs Code Analysis report'
-author: 'Jan-Willem Gmelig Meyling'
+author: 'Luke Collins'
 inputs:
   path:
     description: 'A file, directory or wildcard pattern that describes where to find the reports'
