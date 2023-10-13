@@ -38,7 +38,7 @@
     "unescape": "latest"
   },
   "devDependencies": {
-    "@types/istanbul-lib-report": "^3.0.0",
+    "@types/istanbul-lib-report": "^3.0.1",
     "@types/jest": "^27.0.1",
     "@types/node": "^20.8.5",
     "@types/ramda": "^0.27.6",
