@@ -48,7 +48,7 @@ jobs:
           ${{ runner.os }}-maven-
     - name: Build with Maven
       run: mvn -B verify spotbugs:spotbugs
-    - uses: jwgmeligmeyling/spotbugs-github-action@master
+    - uses: lcollins/spotbugs-github-action@master
       with:
         path: '**/spotbugsXml.xml'
 ```
@@ -85,9 +85,9 @@ Even for `pull_request` events there is the possibility to checkout the pull req
 ## Other relevant actions
 This is a Github Action in a series of other GitHub Actions. Similar actions include:
 
-* [checkstyle-github-action](https://github.com/jwgmeligmeyling/checkstyle-github-action)
-* [pmd-github-action](https://github.com/jwgmeligmeyling/pmd-github-action)
-* [spotbugs-github-action](https://github.com/jwgmeligmeyling/spotbugs-github-action)
+* [checkstyle-github-action](https://github.com/lcollins/checkstyle-github-action)
+* [pmd-github-action](https://github.com/lcollins/pmd-github-action)
+* [spotbugs-github-action](https://github.com/lcollins/spotbugs-github-action)
 
 ## Known limitations
 Due to GitHub API limitations, we cannot specify to which Workflow Run (or underlying Check Suite) a newly created Check Run should be associated.
