@@ -1,18 +1,18 @@
 import * as core from '@actions/core'
 import {BugPattern, FindbugsResult, SourceLine} from './spotbugs'
-import parser from 'fast-xml-parser'
+import {XMLParser} from 'fast-xml-parser'
 import fs from 'fs'
 import BufferEncoding from 'buffer'
 import * as path from 'path'
 import {Annotation, AnnotationLevel} from './github'
-import {fromString as htmlToText, HtmlToTextOptions} from 'html-to-text'
+import {convert as htmlToText, HtmlToTextOptions} from 'html-to-text'
 import decode from 'unescape'
 import {memoizeWith, identity, indexBy, chain} from 'ramda'
 
 const HTML_TO_TEXT_OPTIONS: HtmlToTextOptions = {
   wordwrap: false,
-  preserveNewlines: false,
-  uppercaseHeadings: false
+  preserveNewlines: false //,
+  //TODO: uppercaseHeadings: false
 }
 
 const XML_PARSE_OPTIONS = {
@@ -29,6 +29,7 @@ export function annotationsForPath(resultFile: string): Annotation[] {
   core.info(`Creating annotations for ${resultFile}`)
   const root: string = process.env['GITHUB_WORKSPACE'] || ''
 
+  const parser = new XMLParser()
   const result: FindbugsResult = parser.parse(
     fs.readFileSync(resultFile, 'UTF-8' as BufferEncoding),
     XML_PARSE_OPTIONS
