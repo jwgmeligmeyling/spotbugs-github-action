@@ -7,7 +7,7 @@ inputs:
     required: true
   name:
     description: 'Check run name under which the report is created'
-    default: spotbugs
+    default: SpotBugs
   title:
     description: 'Check run title under which the report is created'
     default: SpotBugs Source Code Analyzer report
